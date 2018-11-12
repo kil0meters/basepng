@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
                 break;
             case 'd':
                 printf("Decoding file: \"%s\"\n", optarg);
+                decode_png(optarg, "output");
+                break;
             case '?':
                 fprintf(stderr, "Try \"%s --help\" for more information.\n", argv[0]);
                 return(1);
