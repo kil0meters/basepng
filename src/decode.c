@@ -27,13 +27,14 @@ bool decode_png(const char *input, const char *dest) {
 
     int width = png_get_image_width(png_ptr, info_ptr);
     int height = png_get_image_height(png_ptr, info_ptr);
-    png_byte color_type = png_get_color_type(png_ptr, info_ptr);
     png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    png_byte channels = png_get_channels(png_ptr, info_ptr);
 
-    if (color_type != 2 || bit_depth != 8)
+    if (bit_depth != 8)
         return false;
 
-    printf("color type: %d\nbit depth: %d\n", color_type, bit_depth);
+    printf("channels: %d\n", channels);
+    printf("bit depth: %d\n", bit_depth);
 
     png_read_update_info(png_ptr, info_ptr);
 
@@ -41,16 +42,37 @@ bool decode_png(const char *input, const char *dest) {
     for (int y=0; y<height; y++)
         row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(png_ptr,info_ptr));
 
+    printf("%ld, %d, %d\n", png_get_rowbytes(png_ptr, info_ptr), width, height);
     png_read_image(png_ptr, row_pointers);
 
     FILE *dest_file = fopen(dest, "wb");
     RETURN_IF_NULL(dest_file, "error: Unable to open file");
-    printf("content size: %d\n", height * width);
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width * 3; x++) {
-            fwrite(&row_pointers[y][x], sizeof(png_byte), 1, dest_file);
+    printf("content size: %d\n", height * width * 3);
+
+    if (channels == 3) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width * 3; x++) {
+                fwrite(&row_pointers[y][x], sizeof(png_byte), 1, dest_file);
+            }
         }
     }
+    else if (channels == 4) {
+        char chars[3];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int r = row_pointers[y][x*4+0];
+                int g = row_pointers[y][x*4+1];
+                int b = row_pointers[y][x*4+2];
+                int a = row_pointers[y][x*4+3];
 
+                chars[0] = (r * a) / 255;
+                chars[1] = (g * a) / 255;
+                chars[2] = (b * a) / 255;
+
+                // printf("%c%c%c", chars[0], chars[1], chars[2]);
+                fwrite(chars, sizeof(char) * 3, 1, dest_file);
+            }
+        }
+    }
     return true;
 }
