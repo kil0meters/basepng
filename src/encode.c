@@ -18,23 +18,19 @@ typedef struct ImageData {
     long length;
 } ImageData;
 
-// finds the squariest image size possible
+// finds the two most similar factors.
+// it's quite unfortunate when a file has a prime
+// numebr of bytes...
 static Dimentions find_image_dimentions(int length) {
-    double length_sqrt = sqrt(length);
-    int length_ceil = ceil(length_sqrt);
-    int length_floor = floor(length_sqrt);
-
-    Dimentions dimentions;
-    if (length_floor * length_floor == length) {
-        dimentions.x = length_floor;
-        dimentions.y = length_floor;
-    }
-    else if (length_floor * length_ceil >= length) {
-        dimentions.x = length_floor;
-        dimentions.y = length_ceil;
-    } else {
-        dimentions.x = length_ceil;
-        dimentions.y = length_ceil;
+    Dimentions dimentions = {0, 0};
+    int max = floor(sqrt(length));
+    for (int i = max; i > 0; i -= 1) {
+        if (length % i == 0) {
+            printf("max: %d\ni: %d\n", max, i);
+            dimentions.x = i;
+            dimentions.y = length / i;
+            break;
+        }
     }
 
     return dimentions;
@@ -48,8 +44,6 @@ static ImageData read_file_into_data(const char *filename) {
         fseek(f, 0, SEEK_END);
         fsize = ftell(f);
         fseek(f, 0, SEEK_SET);
-
-        printf("%ld\n", fsize);
 
         string = malloc(fsize + 1);
         fread(string, fsize, 1, f);
@@ -84,7 +78,7 @@ bool encode_png(const char *input, const char *dest) {
     int content_length = image_data.length;
 
     Dimentions image_dimentions = find_image_dimentions(content_length / 3);
-    printf("length: %d\nx: %d\ny: %d\n\n", content_length / 3, image_dimentions.x, image_dimentions.y);
+    printf("size: %d\nlength: %d\nwidth: %d\n\n", content_length / 3, image_dimentions.x, image_dimentions.y);
 
     png_init_io(png_ptr, file_to_write);
 

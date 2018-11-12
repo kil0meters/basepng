@@ -45,9 +45,10 @@ bool decode_png(const char *input, const char *dest) {
 
     FILE *dest_file = fopen(dest, "wb");
     RETURN_IF_NULL(dest_file, "error: Unable to open file");
+    printf("content size: %d\n", height * width);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width * 3; x++) {
-            fwrite(&row_pointers[y][x], 1, 1, dest_file);
+            fwrite(&row_pointers[y][x], sizeof(png_byte), 1, dest_file);
         }
     }
 
